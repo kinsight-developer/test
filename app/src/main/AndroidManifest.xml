@@ -12,13 +12,18 @@
     <!-- GPSの利用権限・エミュレータ用 -->
     <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
 
+    <!-- mbaas DB接続のための情報 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
             android:allowBackup="true"
             android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name"
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
-            android:theme="@style/AppTheme">
+            android:theme="@style/AppTheme"
+            android:name="com.nifcloud.mbaas.core.NCMBApplicationController">
 
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
