@@ -1,6 +1,6 @@
 package com.kinsight.test
 
-import android.content.DialogInterface
+import android.content.*
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.EditText
@@ -25,6 +25,28 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        val intent = intent
+        val action = intent.action
+        if (Intent.ACTION_VIEW == action) {
+            val uri = intent.data
+            if (uri != null) {
+                // パラメータ値を取得
+                val param1 = uri.getQueryParameter("test_prm1")
+                val param2 = uri.getQueryParameter("test_prm2")
+                // 取得したパラメータをトーストで表示
+                //Toast.makeText(this, "$param1★$param2", Toast.LENGTH_LONG).show();
+
+//                // 取得したパラメータをクリップボードに格納
+//                val clipboardManager =
+//                    getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+//                clipboardManager.setPrimaryClip(ClipData.newPlainText("label", "$param1☆$param2"))
+            }
+        }
     }
 
     /**
@@ -65,7 +87,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .setMessage("表示する名前を入力してください")
             .setView(editText)
             .setPositiveButton("OK", DialogInterface.OnClickListener { _, _->
-                userNameDialogOK()
+                //userNameDialogOK(editText.toString())
+                userNameDialogOK(editText.text.toString())
             })
             .setNegativeButton("キャンセル", DialogInterface.OnClickListener { _, _->
                 userNameDialogCancel()
@@ -78,9 +101,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      * @method userNameDialogOK
      *
      */
-    fun userNameDialogOK() {
+    fun userNameDialogOK(userName : String) {
         // OKをタップしたときの処理
-        Toast.makeText(this, "OK", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "$userName", Toast.LENGTH_LONG).show()
+
+        // 取得したパラメータをクリップボードに格納
+        val clipboardManager =
+            getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboardManager.setPrimaryClip(ClipData.newPlainText("label", userName))
     }
 
     /**
