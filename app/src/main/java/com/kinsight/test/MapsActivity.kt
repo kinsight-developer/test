@@ -81,7 +81,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     fun userNameDialogOK() {
         // OKをタップしたときの処理
         Toast.makeText(this, "OK", Toast.LENGTH_LONG).show()
-
     }
 
     /**
@@ -89,8 +88,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      * @method userNameDialogCancel
      */
     fun userNameDialogCancel() {
-        // OKをタップしたときの処理
-        Toast.makeText(this, "Cancel", Toast.LENGTH_LONG).show()
+        // キャンセルをタップしたときはアプリ終了
+        moveTaskToBack(true);
     }
 
 }
