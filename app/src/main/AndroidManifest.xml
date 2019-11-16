@@ -10,7 +10,7 @@
     <!-- GPSの利用権限 -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <!-- GPSの利用権限・エミュレータ用 -->
-    <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />
+    <!--<uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" />-->
 
     <!-- mbaas DB接続のための情報 -->
     <uses-permission android:name="android.permission.INTERNET" />
