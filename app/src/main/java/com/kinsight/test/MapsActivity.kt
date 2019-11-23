@@ -17,7 +17,6 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 
 // タップしてピン止めし、緯度経度を取得（トースト表示）
-import java.util.Locale
 import java.math.BigDecimal
 import android.content.Context
 import android.content.Intent
@@ -32,11 +31,18 @@ import androidx.core.content.ContextCompat
 import android.util.Log
 import android.location.LocationProvider
 import android.location.Location
+import android.view.View
+import android.widget.Button
+import java.util.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
 
     private lateinit var mMap: GoogleMap
     private lateinit var locationManager: LocationManager
+
+    // 待ち合わせ中フラグ
+    // （初期値）0:待ち合わせ前, 1:待ち合わせ中
+    private var meetingFlg: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,6 +69,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
             }
 
         }
+
+        // 終了ボタンObject取得
+        val btnEnd : Button = findViewById(R.id.btnEnd) as Button
+        // 終了ボタンクリックリスナー登録
+        btnEnd.setOnClickListener(listener)
     }
 
     override fun onResume() {
@@ -76,6 +87,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
                 // パラメータ値を取得
                 val param1 = uri.getQueryParameter("test_prm1")
                 val param2 = uri.getQueryParameter("test_prm2")
+
+                // パラメータからの起動ということは、待ち合わせ中ということになる
+                meetingFlg = 1
+
+                // この後に「onMapReady」が処理される
+
                 // 取得したパラメータをトーストで表示
                 //Toast.makeText(this, "$param1★$param2", Toast.LENGTH_LONG).show();
 
@@ -106,17 +123,25 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
 
         // タップした時のリスナーをセット
         mMap.setOnMapClickListener { tapLocation ->
-            // tapされた位置の緯度経度
-            var location = LatLng(tapLocation.latitude, tapLocation.longitude)
-            val str = String.format(Locale.US, "%f, %f", tapLocation.latitude, tapLocation.longitude)
-            mMap.addMarker(MarkerOptions().position(location).title(str))
-            // タップした場所を真ん中に持ってくる
-//            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 13f))
-            val context = applicationContext
-            val location1 = BigDecimal.valueOf(tapLocation.latitude).toPlainString()
-            val location2 = BigDecimal.valueOf(tapLocation.longitude).toPlainString()
-            val locations = "緯度：$location1　　経度：$location2"
-            Toast.makeText(context, locations, Toast.LENGTH_LONG).show()
+            // 待ち合わせ前の場合、確認ダイアログ表示
+            if (meetingFlg == 0) {
+                // 確認ダイアログ表示
+                dispMeetingPlaceDialog(tapLocation)
+            }
+
+            // 20191123 NISHIZONO Del Start dispMeetingPlaceDialogに移行したためコメントアウト
+//            // tapされた位置の緯度経度
+//            var location = LatLng(tapLocation.latitude, tapLocation.longitude)
+//            val str = String.format(Locale.US, "%f, %f", tapLocation.latitude, tapLocation.longitude)
+//            mMap.addMarker(MarkerOptions().position(location).title(str))
+//            // タップした場所を真ん中に持ってくる
+////            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 13f))
+//            val context = applicationContext
+//            val location1 = BigDecimal.valueOf(tapLocation.latitude).toPlainString()
+//            val location2 = BigDecimal.valueOf(tapLocation.longitude).toPlainString()
+//            val locations = "緯度：$location1　　経度：$location2"
+//            Toast.makeText(context, locations, Toast.LENGTH_LONG).show()
+            // 20191123 NISHIZONO Del End
         }
 
         // ダイアログ表示
@@ -131,22 +156,74 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
         // ダイアログ表示
         val editText = EditText(this)
         editText.hint = "表示名"
-        AlertDialog.Builder(this)
-            //ダイアログ以外の場所をタップしても消えないようにする
-            .setCancelable(false)
-            //タイトル
-            .setTitle("表示名入力")
+//        AlertDialog.Builder(this)
+//            //ダイアログ以外の場所をタップしても消えないようにする
+//            .setCancelable(false)
+//            //タイトル
+//            .setTitle("表示名入力")
+//            // メッセージ
+//            .setMessage("表示する名前を入力してください")
+//            .setView(editText)
+//            // OKボタンタップ時
+//            .setPositiveButton("OK", DialogInterface.OnClickListener { _, _->
+//                // 待ち合わせ中の場合（パラメータ起動の場合）、名前チェック
+//                if (meetingFlg == 1) {
+//                    // 名前の重複チェック
+//                    if (!true) {
+//                        // 重複時、再度名前入力ダイアログ表示
+//
+//                    }
+//                }
+//
+//                //userNameDialogOK(editText.toString())
+//                userNameDialogOK(editText.text.toString())
+//            })
+//            // キャンセルボタンタップ時
+//            .setNegativeButton("キャンセル", DialogInterface.OnClickListener { _, _->
+//                userNameDialogCancel()
+//            })
+//            .show()
+        val adb = AlertDialog.Builder(this)
+        adb.setCancelable(false)
+        adb.setTitle("表示名入力")
+        adb.setMessage("表示する名前を入力してください")
+        adb.setView(editText)
+        adb.setPositiveButton("OK",null)
+        adb.setNegativeButton("キャンセル",null)
+        var mdlg = adb.show()
 
-            .setMessage("表示する名前を入力してください")
-            .setView(editText)
-            .setPositiveButton("OK", DialogInterface.OnClickListener { _, _->
-                //userNameDialogOK(editText.toString())
-                userNameDialogOK(editText.text.toString())
-            })
-            .setNegativeButton("キャンセル", DialogInterface.OnClickListener { _, _->
-                userNameDialogCancel()
-            })
-            .show()
+        val buttonOK: Button = mdlg.getButton(DialogInterface.BUTTON_POSITIVE );
+        buttonOK.setOnClickListener {
+            // 入力チェック
+            if (editText.text.toString() == "") {
+                // 警告メッセージ表示
+                dispAlertDialog("名前を入力してください")
+                // 名前入力ダイアログは、そのまま表示
+                return@setOnClickListener
+            }
+
+            // 待ち合わせ中の場合（パラメータ起動の場合）、名前チェック
+            if (meetingFlg == 1) {
+                // 名前の重複チェック
+                if (!sameNameCheck(editText.text.toString())) {
+                    // 重複時、再度名前入力ダイアログ表示
+                    dispAlertDialog("名前が重複しています。別の名前を入力してください")
+                    // 名前入力ダイアログは、そのまま表示
+                    return@setOnClickListener
+                }
+            }
+
+            // 名前に問題ない場合、クリップボードに転送する（処理不要？？？）
+            userNameDialogOK(editText.text.toString())
+
+            // ダイアログを閉じる
+            mdlg.dismiss()
+        }
+
+        val buttonCancel: Button = mdlg.getButton(DialogInterface.BUTTON_NEGATIVE );
+        buttonCancel.setOnClickListener {
+            userNameDialogCancel()
+        }
     }
 
     /**
@@ -166,23 +243,25 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
         // setContentView(R.layout.activity_maps)
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
 
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                1000)
-        } else {
-            // locationStart()
+        // 20191123 NISHIZONO Del Start 起動時に現在位置情報を取得しているから不要では
+//        if (ContextCompat.checkSelfPermission(this,
+//                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(this,
+//                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+//                1000)
+//        } else {
+//            // locationStart()
+//
+//            if (::locationManager.isInitialized) {
+//                locationManager.requestLocationUpdates(
+//                    LocationManager.GPS_PROVIDER,
+//                    1000,
+//                    50f,
+//                    this)
+//            }
+//        }
+        // 20191123 NISHIZONO Del End
 
-            if (::locationManager.isInitialized) {
-                locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER,
-                    1000,
-                    50f,
-                    this)
-            }
-
-        }
     }
 
     /**
@@ -191,7 +270,97 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
      */
     fun userNameDialogCancel() {
         // キャンセルをタップしたときはアプリ終了
-        moveTaskToBack(true);
+        finishProc()
+    }
+
+    /**
+     * 警告ダイアログ表示
+     * @method dispAlertDialog
+     */
+    fun dispAlertDialog(errorMessage: String) {
+        // ダイアログ表示
+        AlertDialog.Builder(this)
+            //ダイアログ以外の場所をタップしても消えないようにする
+            .setCancelable(false)
+            //タイトル
+            .setTitle("警告")
+            // メッセージ
+            .setMessage(errorMessage)
+            // OKボタンタップすると閉じる
+            .setPositiveButton("OK", DialogInterface.OnClickListener { _, _->
+            })
+            .show()
+    }
+
+    /**
+     * 名前の重複チェック
+     * @method sameNameCheck
+     * @param name:String（）
+     */
+    fun sameNameCheck(name: String) : Boolean {
+        // TODO-チェック処理
+        // 名前チェック
+        if (name == "あ") {
+            return false
+        }
+        return true;
+    }
+
+    /**
+     * 待ち合わせ場所確認ダイアログ表示
+     * @method dispMeetingPlaceDialog
+     */
+    fun dispMeetingPlaceDialog(tapLocation: LatLng) {
+        // ダイアログ表示
+        AlertDialog.Builder(this)
+            //ダイアログ以外の場所をタップしても消えないようにする
+            .setCancelable(false)
+            //タイトル
+            .setTitle("確認")
+            //メッセージ
+            .setMessage("待ち合わせ場所はここでよろしいですか")
+            // OKボタンタップ
+            .setPositiveButton("OK", DialogInterface.OnClickListener { _, _->
+                // 待ち合わせ場所確認ダイアログ表示
+                meetingPlaceDialogOK(tapLocation)
+            })
+            //キャンセルボタンタップ
+            .setNegativeButton("キャンセル", DialogInterface.OnClickListener { _, _->
+                //
+            })
+            .show()
+    }
+
+    /**
+     * 待ち合わせ場所確認ダイアログでOKボタンをタップしたときの処理
+     * @method meetingPlaceDialogOK
+     */
+    fun meetingPlaceDialogOK(tapLocation: LatLng) {
+        // 待ち合わせフラグOn
+        meetingFlg = 1
+
+        // tapされた位置の緯度経度
+        var location = LatLng(tapLocation.latitude, tapLocation.longitude)
+        val str = String.format(Locale.US, "%f, %f", tapLocation.latitude, tapLocation.longitude)
+        mMap.addMarker(MarkerOptions().position(location).title(str))
+        // タップした場所を真ん中に持ってくる
+//            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 13f))
+        val context = applicationContext
+        val location1 = BigDecimal.valueOf(tapLocation.latitude).toPlainString()
+        val location2 = BigDecimal.valueOf(tapLocation.longitude).toPlainString()
+        val locations = "緯度：$location1　　経度：$location2"
+        Toast.makeText(context, locations, Toast.LENGTH_LONG).show()
+
+        // TODO-待ち合わせ場所、自分の位置の緯度経度をサーバーへ登録
+
+        // TODO-URLの取得
+
+        // TODO-URLをダイアログ表示（URLコピー）
+
+        // TODO-サーバーの不要データ削除
+
+        // TODO-緯度経度更新Timer処理開始（30秒間隔）
+        Timer().schedule(locationsUpdateTimerCallback(), 0, 30000)
     }
 
     @SuppressLint("MissingPermission")
@@ -291,5 +460,63 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener {
 
     }
 
+    /**
+     * 終了ボタンタップリスナー登録
+     */
+    val listener = object: View.OnClickListener {
+        override fun onClick(v: View?) {
+            // 終了確認ダイアログ表示
+            dispExitConfirmationDialog()
+        }
+    }
+
+    /**
+     * 終了確認ダイアログ表示
+     * @method dispExitConfirmationDialog
+     */
+    fun dispExitConfirmationDialog() {
+        // ダイアログ表示
+        AlertDialog.Builder(this)
+            //ダイアログ以外の場所をタップしても消えないようにする
+            .setCancelable(false)
+            //タイトル
+            .setTitle("注意")
+            // メッセージ
+            .setMessage("待ち合わせている方から、あなたの位置がわからなくなりますが、よろしいですか？")
+            // OKボタンタップ時、終了
+            .setPositiveButton("OK", DialogInterface.OnClickListener { _, _->
+                // 終了
+                finishProc();
+            })
+            // キャンセルボタンタップ時、処理なし（ダイアログを閉じるだけ）
+            .setNegativeButton("キャンセル", DialogInterface.OnClickListener { _, _->
+                //
+            })
+            .show()
+    }
+
+    /**
+     * 緯度経度の更新タイマー処理
+     * @method locationsUpdateTimerCallback
+     */
+    class locationsUpdateTimerCallback: TimerTask() {
+        override fun run() {
+            Log.d("debug", "緯度経度更新処理")
+            // TODO-自分の位置情報を更新する
+            // TODO-相手の位置情報を更新する
+            // TODO-MAPを更新する
+        }
+    }
+
+    /**
+     * 終了処理
+     * @method finishProc
+     */
+    fun finishProc() {
+        // TODO-サーバーの不要データ削除
+
+        // 終了
+        finish()
+    }
 
 }
